@@ -1,9 +1,21 @@
+[tool.poetry]
+name = "pymediawiki-async"
+version = "0.1.0"
+description = ""
+authors = ["KoishiMoe <68314080+KoishiMoe@users.noreply.github.com>", "Tyler Barrus <barrust@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/KoishiMoe/pymediawiki-async"
+
+[tool.poetry.dependencies]
+python = ">=3.8, <4.0.0"
+beautifulsoup4 = "^4.11.1"
+aiohttp = "^3.8.1"
+
+[tool.poetry.dev-dependencies]
+ipython = "^8.4.0"
+pycodestyle = "^2.9.1"
+
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "setuptools_scm>=6.2",
-    "requests>=2.0.0,<3.0.0",
-    "beautifulsoup4"
-]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
