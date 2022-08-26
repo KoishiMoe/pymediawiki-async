@@ -826,7 +826,8 @@ class MediaWiki(object):
             await self.__cat_tree_rec(cat, depth, results, 0, categories, links)
         return results
 
-    async def page(self, title=None, pageid=None, auto_suggest=True, redirect=True, preload=False):
+    async def page(self, title=None, pageid=None, auto_suggest=True, redirect=True, preload=False,
+                   convert_titles=False, iwurl=True):
         """ Get MediaWiki page based on the provided title or pageid
 
             Args:
@@ -835,6 +836,9 @@ class MediaWiki(object):
                 auto_suggest (bool): **True:** Allow page title auto-suggest
                 redirect (bool): **True:** Follow page redirects
                 preload (bool): **True:** Load most page properties
+                convert_titles (bool): **False:** Convert titles to other variants if necessary. \
+                    Only works if the wiki's content language supports variant conversion.
+                iwurl (bool): **False:** Whether to get the full URL if the title is an interwiki link.
             Raises:
                 ValueError: when title is blank or None and no pageid is provided
             Raises:
@@ -849,8 +853,10 @@ class MediaWiki(object):
                 if temp_title is None:  # page doesn't exist
                     raise PageError(title=title)
                 title = temp_title
-            return await MediaWikiPage.create(self, title, redirect=redirect, preload=preload)
-        return await MediaWikiPage.create(self, pageid=pageid, preload=preload)
+            return await MediaWikiPage.create(self, title, redirect=redirect, preload=preload,
+                                              convert_titles=convert_titles, iwurl=iwurl)
+        return await MediaWikiPage.create(self, pageid=pageid, preload=preload,
+                                          convert_titles=convert_titles, iwurl=iwurl)
 
     async def wiki_request(self, params):
         """ Make a request to the MediaWiki API using the given search

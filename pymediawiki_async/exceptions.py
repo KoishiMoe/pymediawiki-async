@@ -254,3 +254,27 @@ class MediaWikiLoginError(MediaWikiBaseException):
     def error(self):
         """ str: The error message that the MediaWiki site returned """
         return self._error
+
+
+# Exception add by KoishiMoe
+class InterWikiError(MediaWikiBaseException):
+    """ Exception raised when a page resolves to be an interwiki link
+
+        Args:
+            title (str): Title that results in a interwiki link
+            url (str): Full URL to the link
+            """
+
+    def __init__(self, title, url):
+        self._title = title
+        self._url = url
+        msg = "{0} is an interwiki link to {1}".format(self._title, self._url)
+        super(InterWikiError, self).__init__(msg)
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def url(self):
+        return self._url

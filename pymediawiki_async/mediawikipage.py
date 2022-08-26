@@ -17,6 +17,7 @@ from .exceptions import (
     RedirectError,
     DisambiguationError,
     ODD_ERROR_MESSAGE,
+    InterWikiError,
 )
 from .utilities import str_or_unicode, is_relative_url
 
@@ -54,6 +55,8 @@ class MediaWikiPage(object):
         "_hatnotes",
         "_wikitext",
         "_preview",
+        "_converttitles",
+        "_iwurl",
     ]
 
     def __init__(
@@ -63,6 +66,8 @@ class MediaWikiPage(object):
             pageid=None,
             preload=False,
             original_title="",
+            convert_titles=False,
+            iwurl=True,
     ):
 
         self.mediawiki = mediawiki
@@ -95,6 +100,8 @@ class MediaWikiPage(object):
         self._soup = None
         self._wikitext = None
         self._preview = None
+        self._converttitles = convert_titles
+        self._iwurl = iwurl
 
         preload_props = [
             "content",
@@ -123,6 +130,8 @@ class MediaWikiPage(object):
             redirect=True,
             preload=False,
             original_title="",
+            convert_titles=False,
+            iwurl=True,
     ):
         """ create a MediaWikiPage instance
 
@@ -134,6 +143,9 @@ class MediaWikiPage(object):
             preload (bool): **True:** Load most properties after getting page
             original_title (str): Not to be used from the caller; used to \
                                   help follow redirects
+            convert_titles (bool): Convert titles to other variants if necessary. \
+                Only works if the wiki's content language supports variant conversion.
+            iwurl (bool): Whether to get the full URL if the title is an interwiki link.
         Raises:
             :py:func:`mediawiki.exceptions.PageError`: if page provided does \
             not exist
@@ -147,7 +159,7 @@ class MediaWikiPage(object):
         Warning:
             This should never need to be used directly! Please use \
             :func:`mediawiki.MediaWiki.page` instead."""
-        self = MediaWikiPage(mediawiki, title, pageid, preload, original_title)
+        self = MediaWikiPage(mediawiki, title, pageid, preload, original_title, convert_titles, iwurl)
         await self.__load(redirect=redirect, preload=preload)
         return self
 
@@ -609,15 +621,25 @@ class MediaWikiPage(object):
         }
         query_params.update(self.__title_query_param())
 
+        # params add by KoishiMoe
+        if self._converttitles:
+            query_params.update({"converttitles": 1})
+        if self._iwurl:
+            query_params.update({"iwurl": 1})
+
         request = await self.mediawiki.wiki_request(query_params)
 
         query = request["query"]
-        pageid = list(query["pages"].keys())[0]
-        page = query["pages"][pageid]
+        if query.get("pages"):
+            pageid = list(query["pages"].keys())[0]
+            page = query["pages"][pageid]
 
         # determine result of the request
+        # interwiki is present in query if page is a interwiki; in this case, there's no `pages` in query
+        if "interwiki" in query:
+            self._handle_interwiki(query)
         # missing is present if the page is missing
-        if "missing" in page:
+        if "missing" in page or pageid == '-1':  # sometimes it doesn't return missing, but pageid == -1
             self._raise_page_error()
         # redirects is present in query if page is a redirect
         elif "redirects" in query:
@@ -671,6 +693,13 @@ class MediaWikiPage(object):
             page["fullurl"],
             disambiguation,
         )
+
+    # method add by KoishiMoe
+    def _handle_interwiki(self, query):
+        inter_wiki = query["interwiki"][0]
+        title = inter_wiki.get("title", '')[len(f'{inter_wiki.get("iw", "")}:'):]
+        url = inter_wiki.get("url", '')
+        raise InterWikiError(title, url)
 
     async def _handle_redirect(self, redirect, preload, query, page):
         """ handle redirect """
