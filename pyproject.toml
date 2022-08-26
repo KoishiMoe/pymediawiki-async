@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pymediawiki-async"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["KoishiMoe <68314080+KoishiMoe@users.noreply.github.com>", "Tyler Barrus <barrust@gmail.com>"]
 license = "MIT"

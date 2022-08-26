@@ -638,6 +638,9 @@ class MediaWikiPage(object):
         # interwiki is present in query if page is a interwiki; in this case, there's no `pages` in query
         if "interwiki" in query:
             self._handle_interwiki(query)
+        # converted may be present in query if convert_titles == True
+        if "converted" in query:
+            self.title = query["converted"][0].get('to') or self.title
         # missing is present if the page is missing
         if "missing" in page or pageid == '-1':  # sometimes it doesn't return missing, but pageid == -1
             self._raise_page_error()
